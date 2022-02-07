@@ -1,30 +1,38 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations.Schema;
 
 bool loop = true;
+Help();
 while(loop)
 {
     using (var db = new Db(new DbContextOptions<Db>()))
     {
-        Console.WriteLine("create db\ndelete db\nfill db\nshow data\ntest join\ntest update\ntest delete\nexit");
         switch(Console.ReadLine())
         {
+            case "clear":
+                Console.Clear();
+                break;
+            case "help":
+                Help();
+                break;
             case "create db":
-                db.Database.EnsureCreated();
+                Console.WriteLine(String.Format("Database {0}", db.Database.EnsureCreated() ? "Created" : "Not created"));
                 break;
             case "delete db":
-                db.Database.EnsureDeleted();
+                Console.WriteLine(String.Format("Database {0}", db.Database.EnsureDeleted() ? "Deleted" : "Not deleted"));
                 break;
             case "fill db":
-                for (int i = 0; i < 50; i++)
-                {
-                    db.Customers.Add(new Customers { Name = $"Customer {i}", UnitId = new Random().Next(20), Number = i });
-                }
-                for (int i = 0; i < 30; i++)
+                for (int i = 0; i < 21; i++)
                 {
                     db.Units.Add(new Units { Name = $"Unit {i}" });
                 }
-                Console.WriteLine(db.SaveChanges());           
+                Console.WriteLine(db.SaveChanges() + "Units created");
+                var CustomerList = new List<Customers>();
+                for (int i = 1; i < 31; i++)
+                {
+                    CustomerList.Add(new Customers { Name = $"Customer {i}", UnitId = new Random().Next(1,20), Number = i });
+                }
+                db.Customers.AddRange(CustomerList);
+                Console.WriteLine(db.SaveChanges() + "Customers created");
                 break;
             case "test join":
                 var units = new List<Units>
@@ -37,12 +45,10 @@ while(loop)
                 };
                 var data = (from c in db.Customers.ToList()
                             join u in units on c.UnitId equals u.Id
-                            select new Customers { Id = c.Id, Name = c.Name, UnitId = c.UnitId, UnitName = u.Name}).ToList();
+                            select new Customers { Id = c.Id, Name = c.Name, UnitId = c.UnitId, Unit = u}).ToList();
                 break;
             case "test update":
-                var UpdateModel = new Customers { Id = 9 };
-                Console.WriteLine($"Olde customer data: {UpdateModel}");
-                UpdateModel.Number = 0022002200;
+                var UpdateModel = new Customers { Id = 9, Number = 121212 };
                 db.Entry(UpdateModel).Property("Number").IsModified = true;
                 Console.WriteLine($"Save result: {db.SaveChanges()}");
                 break;
@@ -74,6 +80,10 @@ while(loop)
 }
 Console.ReadLine();
 
+static void Help()
+{
+    Console.WriteLine("create db\ndelete db\nfill db\nshow data\ntest join\ntest update\ntest delete\nclear\nhelp\nexit");
+}
 
 
 
@@ -97,8 +107,7 @@ public class Customers
     public string Name { get; set; }
     public int Number { get; set; }
     public int UnitId { get; set; }
-    [NotMapped]
-    public string UnitName { get; set; }
+    public virtual Units Unit { get; set; }
 }
 public class Units
 {
