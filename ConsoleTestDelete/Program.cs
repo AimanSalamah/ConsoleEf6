@@ -20,6 +20,20 @@ while(loop)
             case "delete db":
                 Console.WriteLine(String.Format("Database {0}", db.Database.EnsureDeleted() ? "Deleted" : "Not deleted"));
                 break;
+            case "from query":
+                var result = (from unit in db.Units
+                            join customer in db.Customers on unit.Id equals customer.UnitId
+                            select new
+                            {
+                                Unit = unit.Name,
+                                Customer = customer.Name
+                            }).ToList();
+
+                foreach (var item in result)
+                {
+                    Console.WriteLine(item.Unit + " " + item.Customer);
+                }
+                break;
             case "fill db":
                 for (int i = 0; i < 21; i++)
                 {
@@ -78,11 +92,21 @@ while(loop)
         }
     }
 }
-Console.ReadLine();
 
 static void Help()
 {
-    Console.WriteLine("create db\ndelete db\nfill db\nshow data\ntest join\ntest update\ntest delete\nclear\nhelp\nexit");
+    Console.WriteLine(
+        "create db\n" +
+        "delete db\n" +
+        "fill db\n" +
+        "show data\n" +
+        "test join\n" +
+        "test update\n" +
+        "test delete\n" +
+        "from query\n" +
+        "clear\n" +
+        "help\n" +
+        "exit\n");
 }
 
 
@@ -113,4 +137,5 @@ public class Units
 {
     public int Id { get; set; }
     public string Name { get; set; }
+    public virtual ICollection<Customers> Customers { get; set; }
 }
