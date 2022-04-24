@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 bool loop = true;
 Help();
@@ -10,6 +11,25 @@ while(loop)
         {
             case "clear":
                 Console.Clear();
+                break;
+            case "dbreport":
+                var Tables = await db.DbTables.FromSqlRaw<DbTables>($"SELECT name,modify_date,max_column_id_used FROM sys.Tables").ToListAsync();
+                var TableInfo = new List<DbTableInfo>();
+                foreach (var table in Tables)
+                {
+                    var tableinfo = await db.DbTableInfo.FromSqlRaw<DbTableInfo>($"EXEC Sp_spaceused '{table.name}'").ToListAsync();
+                    foreach (var item in tableinfo)
+                    {
+                        item.modify_date = table.modify_date;
+                        item.max_column_id_used = table.max_column_id_used;
+                    }
+                    TableInfo.AddRange(tableinfo);
+                }
+                Console.WriteLine("name,rows,reserved,data,index_size,unused,modify_date,max_column_id_used");
+                foreach (var item in TableInfo)
+                {
+                    Console.WriteLine($"{item.name},{item.rows.Trim()},{item.reserved},{item.data},{item.index_size},{item.unused},{item.modify_date},{item.max_column_id_used}");
+                }
                 break;
             case "help":
                 Help();
@@ -124,6 +144,9 @@ public class Db : DbContext
     }
     public DbSet<Customers> Customers { get; set; }
     public DbSet<Units> Units { get; set; }
+    public DbSet<DbTables> DbTables { get; set; }
+    public DbSet<DbTableInfo> DbTableInfo { get; set; }
+
 }
 public class Customers
 {
@@ -138,4 +161,25 @@ public class Units
     public int Id { get; set; }
     public string Name { get; set; }
     public virtual ICollection<Customers> Customers { get; set; }
+}
+public class DbTables
+{
+    [System.ComponentModel.DataAnnotations.Key]
+    public string name { get; set; }
+    public DateTime modify_date { get; set; }
+    public int max_column_id_used { get; set; }
+}
+public class DbTableInfo
+{
+    [System.ComponentModel.DataAnnotations.Key]
+    public string name { get; set; }
+    public string rows { get; set; }
+    public string reserved { get; set; }
+    public string data { get; set; }
+    public string index_size { get; set; }
+    public string unused { get; set; }
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public DateTime modify_date { get; set; }
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public int max_column_id_used { get; set; }
 }
