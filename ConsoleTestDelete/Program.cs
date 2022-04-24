@@ -25,11 +25,13 @@ while(loop)
                     }
                     TableInfo.AddRange(tableinfo);
                 }
-                Console.WriteLine("name,rows,reserved,data,index_size,unused,modify_date,max_column_id_used");
+                var TableInfoString = "name,rows,reserved,data,index_size,unused,modify_date,max_column_id_used\n";
                 foreach (var item in TableInfo)
                 {
-                    Console.WriteLine($"{item.name},{item.rows.Trim()},{item.reserved},{item.data},{item.index_size},{item.unused},{item.modify_date},{item.max_column_id_used}");
+                    TableInfoString += $"{item.name},{item.rows.Trim()},{item.reserved},{item.data},{item.index_size},{item.unused},{item.modify_date},{item.max_column_id_used}\n";
                 }
+                string fileName = $"Report{DateTime.Now:ddMMMMyyyyHHmm}.csv";
+                System.IO.File.WriteAllText(fileName, TableInfoString);
                 break;
             case "help":
                 Help();
